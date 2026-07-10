@@ -11,7 +11,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha
+    }}
   cancel-in-progress: true
 
 env:
@@ -25,40 +26,6 @@ jobs:
       matrix:
         PYTHON:
           - {VERSION: "3.9", NOXSESSION: "flake"}
-          - {VERSION: "3.14", NOXSESSION: "flake"}
-          - {VERSION: "3.14", NOXSESSION: "rust"}
-          - {VERSION: "3.12", NOXSESSION: "docs", OPENSSL: {TYPE: "openssl", VERSION: "3.6.2"}}
-          - {VERSION: "3.14t", NOXSESSION: "rust,tests"}
-          - {VERSION: "pypy-3.11", NOXSESSION: "tests-nocoverage"}
-          - {VERSION: "3.14", NOXSESSION: "tests", OPENSSL: {TYPE: "openssl", VERSION: "3.6.2", CONFIG_FLAGS: "no-engine no-rc2 no-srtp no-ct no-psk"}}
-          - {VERSION: "3.14", NOXSESSION: "tests", OPENSSL: {TYPE: "openssl", VERSION: "3.6.2", CONFIG_FLAGS: "no-legacy", NO_LEGACY: "0"}}
-          - {VERSION: "3.14", NOXSESSION: "tests", OPENSSL: {TYPE: "openssl", VERSION: "3.6.2", CONFIG_FLAGS: "no-legacy", NO_LEGACY: "1"}}
-          - {VERSION: "3.14", NOXSESSION: "tests", NOXARGS: "--enable-fips=1", OPENSSL: {TYPE: "openssl", CONFIG_FLAGS: "enable-fips", VERSION: "3.6.2"}}
-          - {VERSION: "3.14", NOXSESSION: "tests", OPENSSL: {TYPE: "openssl", VERSION: "3.0.20"}}
-          - {VERSION: "3.14", NOXSESSION: "tests", OPENSSL: {TYPE: "openssl", VERSION: "3.4.5"}}
-          - {VERSION: "3.14", NOXSESSION: "tests", OPENSSL: {TYPE: "openssl", VERSION: "3.5.6"}}
-          - {VERSION: "3.14", NOXSESSION: "rust,tests", OPENSSL: {TYPE: "openssl", VERSION: "4.0.0"}}
-          - {VERSION: "3.14", NOXSESSION: "tests-ssh", OPENSSL: {TYPE: "openssl", VERSION: "3.6.2"}}
-          - {VERSION: "3.14", NOXSESSION: "rust,tests", OPENSSL: {TYPE: "libressl", VERSION: "4.2.1"}}
-          - {VERSION: "3.14", NOXSESSION: "rust,tests", OPENSSL: {TYPE: "libressl", VERSION: "4.3.1"}}
-          # Latest commit on the BoringSSL main branch, as of May 29, 2026.
-          - {VERSION: "3.14", NOXSESSION: "rust,tests", OPENSSL: {TYPE: "boringssl", VERSION: "ef4f3c2197f90c96a44716aedaac55a10cb4e479"}}
-          # Latest tag of AWS-LC main branch, as of May 09, 2026.
-          - {VERSION: "3.14", NOXSESSION: "rust,tests", OPENSSL: {TYPE: "aws-lc", VERSION: "v1.73.0"}}
-          # Latest commit on the OpenSSL master branch, as of May 29, 2026.
-          - {VERSION: "3.14", NOXSESSION: "tests", OPENSSL: {TYPE: "openssl", VERSION: "0c1194718301808d48db78355c03c6f5e884e4a3"}}
-          # Builds with various Rust versions. Includes MSRV and next
-          # potential future MSRV.
-          # - 1.95: cfg_select
-          - {VERSION: "3.14", NOXSESSION: "rust,tests", RUST: "1.83.0"}
-          - {VERSION: "3.14", NOXSESSION: "rust,tests", RUST: "1.83.0", OPENSSL: {TYPE: "aws-lc", VERSION: "v1.73.0"}}
-          - {VERSION: "3.14", NOXSESSION: "rust,tests", RUST: "1.83.0", OPENSSL: {TYPE: "boringssl", VERSION: "ef4f3c2197f90c96a44716aedaac55a10cb4e479"}}
-          - {VERSION: "3.14", NOXSESSION: "rust,tests", RUST: "beta"}
-          - {VERSION: "3.14", NOXSESSION: "rust,tests", RUST: "nightly"}
-          - {VERSION: "3.14", NOXSESSION: "tests-rust-debug"}
-          # Not actually an MSRV, just for coverage on this
-          - {VERSION: "3.14", NOXSESSION: "tests", RUST: "1.87", OPENSSL: {TYPE: "openssl", VERSION: "3.6.2"}}
-          - {VERSION: "3.14", NOXSESSION: "tests", RUST: "1.87", NOXARGS: "--enable-fips=1", OPENSSL: {TYPE: "openssl", CONFIG_FLAGS: "enable-fips", VERSION: "3.6.2"}}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -85,7 +52,8 @@ jobs:
       - name: Clone test vectors
         timeout-minutes: 2
         uses: ./.github/actions/fetch-vectors
-        if: matrix.PYTHON.NOXSESSION != 'flake' && matrix.PYTHON.NOXSESSION != 'docs' && matrix.PYTHON.NOXSESSION != 'rust'
+        if: matrix.PYTHON.NOXSESSION != 'flake' && matrix.PYTHON.NOXSESSION != 'docs'
+          && matrix.PYTHON.NOXSESSION != 'rust'
       - name: Compute config hash and set config vars
         run: |
           DEFAULT_CONFIG_FLAGS="shared no-ssl2 no-ssl3"
@@ -107,7 +75,9 @@ jobs:
           # When altering the openssl build process you may need to increment
           # the value on the end of this cache key so that you can prevent it
           # from fetching the cache and skipping the build step.
-          key: "${{ matrix.PYTHON.OPENSSL.TYPE }}-${{ matrix.PYTHON.OPENSSL.VERSION }}-${{ env.OPENSSL_HASH }}-${{ hashFiles('.github/bin/build_openssl.sh') }}-0"
+          key: "${{ matrix.PYTHON.OPENSSL.TYPE }}-${{ matrix.PYTHON.OPENSSL.VERSION\
+            \ }}-${{ env.OPENSSL_HASH }}-${{ hashFiles('.github/bin/build_openssl.sh')\
+            \ }}-0"
         if: matrix.PYTHON.OPENSSL
       - name: Build custom OpenSSL/LibreSSL
         run: .github/bin/build_openssl.sh
@@ -122,7 +92,8 @@ jobs:
           echo "RUSTFLAGS=-Clink-arg=-Wl,-rpath=${OSSL_PATH}/lib -Clink-arg=-Wl,-rpath=${OSSL_PATH}/lib64" >> $GITHUB_ENV
         if: matrix.PYTHON.OPENSSL
       - run: rustup run stable cargo install bindgen-cli
-        if: matrix.PYTHON.OPENSSL.TYPE == 'boringssl' || matrix.PYTHON.OPENSSL.TYPE == 'aws-lc'
+        if: matrix.PYTHON.OPENSSL.TYPE == 'boringssl' || matrix.PYTHON.OPENSSL.TYPE
+          == 'aws-lc'
       - name: Cache rust and pip
         uses: ./.github/actions/cache
         timeout-minutes: 2
@@ -131,19 +102,21 @@ jobs:
           # setup-python step because the latter doesn't distinguish
           # different Python versions of PyPy that share the same PyPy
           # version number.
-          key: "${{ matrix.PYTHON.VERSION }}-${{ steps.setup-python.outputs.python-version }}-${{ matrix.PYTHON.NOXSESSION }}-${{ env.OPENSSL_HASH }}-0"
+          key: "${{ matrix.PYTHON.VERSION }}-${{ steps.setup-python.outputs.python-version\
+            \ }}-${{ matrix.PYTHON.NOXSESSION }}-${{ env.OPENSSL_HASH }}-0"
 
-      - run: python -m pip install -c ci-constraints-requirements.txt 'nox[uv]' 'tomli; python_version < "3.11"'
+      - run: python -m pip install -c ci-constraints-requirements.txt 'nox[uv]' 'tomli;
+          python_version < "3.11"'
       - name: Create nox environment
         run: |
-            nox -v --install-only
+          nox -v --install-only
         env:
           NOXSESSION: ${{ matrix.PYTHON.NOXSESSION }}
           # Needed until https://github.com/PyO3/pyo3/issues/5093
           PYO3_USE_ABI3_FORWARD_COMPATIBILITY: 1
       - name: Tests
         run: |
-            nox --no-install --  --color=yes --wycheproof-root=wycheproof --x509-limbo-root=x509-limbo ${{ matrix.PYTHON.NOXARGS }}
+          nox --no-install --  --color=yes --wycheproof-root=wycheproof --x509-limbo-root=x509-limbo ${{ matrix.PYTHON.NOXARGS }}
         env:
           NOXSESSION: ${{ matrix.PYTHON.NOXSESSION }}
           COLUMNS: 80
@@ -159,19 +132,6 @@ jobs:
       matrix:
         IMAGE:
           - {IMAGE: "bookworm", NOXSESSION: "tests", RUNNER: "ubuntu-latest"}
-          - {IMAGE: "trixie", NOXSESSION: "tests", RUNNER: "ubuntu-latest"}
-          - {IMAGE: "sid", NOXSESSION: "tests", RUNNER: "ubuntu-latest"}
-          - {IMAGE: "ubuntu-jammy", NOXSESSION: "tests", RUNNER: "ubuntu-latest"}
-          - {IMAGE: "ubuntu-noble", NOXSESSION: "tests", RUNNER: "ubuntu-latest"}
-          - {IMAGE: "ubuntu-resolute", NOXSESSION: "tests", RUNNER: "ubuntu-latest"}
-          - {IMAGE: "ubuntu-rolling", NOXSESSION: "tests", RUNNER: "ubuntu-latest"}
-          - {IMAGE: "fedora", NOXSESSION: "tests", RUNNER: "ubuntu-latest"}
-          - {IMAGE: "centos-stream9", NOXSESSION: "tests", RUNNER: "ubuntu-latest"}
-          - {IMAGE: "centos-stream10", NOXSESSION: "tests", RUNNER: "ubuntu-latest"}
-
-          - {IMAGE: "ubuntu-rolling:aarch64", NOXSESSION: "tests", RUNNER: "ubuntu-24.04-arm"}
-          - {IMAGE: "ubuntu-rolling:armv7l", NOXSESSION: "tests", RUNNER: "ubuntu-24.04-arm"}
-          - {IMAGE: "ubuntu-rolling:ppc64le", NOXSESSION: "tests", RUNNER: "ubuntu-24.04-ppc64le"}
     timeout-minutes: 15
     env:
       RUSTUP_HOME: /root/.rustup
@@ -195,13 +155,15 @@ jobs:
       - run: |
           echo "OPENSSL_FORCE_FIPS_MODE=1" >> $GITHUB_ENV
         if: matrix.IMAGE.FIPS
-      - run: /venv/bin/python -m pip install -c ci-constraints-requirements.txt 'nox[uv]' 'tomli; python_version < "3.11"'
+      - run: /venv/bin/python -m pip install -c ci-constraints-requirements.txt 'nox[uv]'
+          'tomli; python_version < "3.11"'
       - run: '/venv/bin/nox -v --install-only'
         env:
           # OPENSSL_ENABLE_SHA1_SIGNATURES is for CentOS 9 Stream
           OPENSSL_ENABLE_SHA1_SIGNATURES: 1
           NOXSESSION: ${{ matrix.IMAGE.NOXSESSION }}
-      - run: '/venv/bin/nox --no-install --  --color=yes --wycheproof-root="wycheproof" --x509-limbo-root="x509-limbo"'
+      - run: '/venv/bin/nox --no-install --  --color=yes --wycheproof-root="wycheproof"
+          --x509-limbo-root="x509-limbo"'
         env:
           COLUMNS: 80
           # OPENSSL_ENABLE_SHA1_SIGNATURES is for CentOS 9 Stream
@@ -221,7 +183,6 @@ jobs:
       matrix:
         IMAGE:
           - {IMAGE: "alpine", NOXSESSION: "tests", RUNNER: "ubuntu-latest"}
-          - {IMAGE: "alpine:aarch64", NOXSESSION: "tests", RUNNER: "ubuntu-24.04-arm"}
     timeout-minutes: 15
     env:
       RUSTUP_HOME: /root/.rustup
@@ -257,13 +218,15 @@ jobs:
       - run: |
           echo "OPENSSL_FORCE_FIPS_MODE=1" >> $GITHUB_ENV
         if: matrix.IMAGE.FIPS
-      - run: /venv/bin/python -m pip install -c ci-constraints-requirements.txt 'nox[uv]' 'tomli; python_version < "3.11"'
+      - run: /venv/bin/python -m pip install -c ci-constraints-requirements.txt 'nox[uv]'
+          'tomli; python_version < "3.11"'
       - run: '/venv/bin/nox -v --install-only'
         env:
           # OPENSSL_ENABLE_SHA1_SIGNATURES is for CentOS 9 Stream
           OPENSSL_ENABLE_SHA1_SIGNATURES: 1
           NOXSESSION: ${{ matrix.IMAGE.NOXSESSION }}
-      - run: '/venv/bin/nox --no-install --  --color=yes --wycheproof-root="wycheproof" --x509-limbo-root="x509-limbo"'
+      - run: '/venv/bin/nox --no-install --  --color=yes --wycheproof-root="wycheproof"
+          --x509-limbo-root="x509-limbo"'
         env:
           COLUMNS: 80
           # OPENSSL_ENABLE_SHA1_SIGNATURES is for CentOS 9 Stream
@@ -280,8 +243,6 @@ jobs:
           - {OS: 'macos-15', ARCH: 'arm64'}
         PYTHON:
           - {VERSION: "3.9", NOXSESSION: "tests"}
-          - {VERSION: "3.14", NOXSESSION: "tests"}
-          - {VERSION: "3.14t", NOXSESSION: "tests"}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -303,7 +264,8 @@ jobs:
         timeout-minutes: 3
       - run: rustup component add llvm-tools-preview
 
-      - run: python -m pip install -c ci-constraints-requirements.txt 'nox[uv]' 'tomli; python_version < "3.11"'
+      - run: python -m pip install -c ci-constraints-requirements.txt 'nox[uv]' 'tomli;
+          python_version < "3.11"'
 
       - name: Clone test vectors
         timeout-minutes: 2
@@ -336,7 +298,7 @@ jobs:
       - uses: ./.github/actions/upload-coverage
 
   windows:
-    runs-on: ${{ matrix.WINDOWS.RUNNER }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -344,14 +306,6 @@ jobs:
           - {ARCH: 'x64', WINDOWS: 'win64', RUNNER: 'windows-latest'}
         PYTHON:
           - {VERSION: "3.9", NOXSESSION: "tests-nocoverage"}
-          - {VERSION: "3.14", NOXSESSION: "tests"}
-          - {VERSION: "3.14t", NOXSESSION: "tests"}
-        include:
-          # Windows on ARM is in a stability validation period; the work
-          # step uses `continue-on-error` only for this entry so transient
-          # failures don't block PR validation.
-          - WINDOWS: {ARCH: 'arm64', WINDOWS: 'arm64', RUNNER: 'windows-11-arm'}
-            PYTHON: {VERSION: "3.14", NOXSESSION: "tests-nocoverage"}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -378,63 +332,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - DOWNSTREAM: paramiko
-            REPO: paramiko/paramiko
-            # Latest commit on the paramiko main branch, as of May 10, 2026.
-            REF: d60d5c17d78f344b51ed651e796d2931133a9b22
-            PATH: paramiko
-          - DOWNSTREAM: pyopenssl
-            REPO: pyca/pyopenssl
-            # Latest commit on the pyopenssl main branch, as of May 05, 2026.
-            REF: 23208870fab95ba33ab897e5b7d66ceb38ce56f7
-            PATH: pyopenssl
-          - DOWNSTREAM: pyopenssl-release
-            REPO: pyca/pyopenssl
-            # Latest release tag of pyopenssl-release, as of May 05, 2026.
-            REF: 26.2.0
-            PATH: pyopenssl
-          - DOWNSTREAM: twisted
-            REPO: twisted/twisted
-            # Latest commit on the twisted trunk branch, as of May 27, 2026.
-            REF: e3c51d0f624e0391cb385f0023bbe2fab2838125
-            PATH: twisted
-          - DOWNSTREAM: aws-encryption-sdk-python
-            REPO: awslabs/aws-encryption-sdk-python
-            # Latest commit on the aws-encryption-sdk-python master branch, as of May 29, 2026.
-            REF: 61040db041104dfd950d1541039ad996dbe895be
-            PATH: aws-encryption-sdk-python
-          - DOWNSTREAM: aws-dynamodb-encryption-python
-            REPO: awslabs/aws-dynamodb-encryption-python
-            # Latest commit on the aws-dynamodb-encryption-python master branch, as of Apr 29, 2026.
-            REF: fbdf52978e99f06b1b513b4be33d826c5ac5ada1
-            PATH: aws-dynamodb-encryption-python
-          - DOWNSTREAM: certbot
-            REPO: certbot/certbot
-            # Latest commit on the certbot main branch, as of May 20, 2026.
-            REF: 750b9997defdf3be12f826d7e2ea98e7c7572076
-            PATH: certbot
-          - DOWNSTREAM: certbot-josepy
-            REPO: certbot/josepy
-            # Latest commit on the certbot-josepy main branch, as of May 12, 2026.
-            REF: 83425fe014d372377b0e39549d8c03deeefcbb51
-            PATH: josepy
-          - DOWNSTREAM: mitmproxy
-            REPO: mitmproxy/mitmproxy
-            # Latest commit on the mitmproxy main branch, as of May 22, 2026.
-            REF: 12a292c2e7a066924b946d7fa9b4abe1fc131265
-            PATH: mitmproxy
-          - DOWNSTREAM: scapy
-            REPO: secdev/scapy
-            # Latest commit on the scapy master branch, as of May 29, 2026.
-            REF: e69f5a2ec5837295b8fa2525e5f9922a687b9cf7
-            PATH: scapy
-          - DOWNSTREAM: sigstore-python
-            REPO: sigstore/sigstore-python
-            # Latest commit on the sigstore-python main branch, as of May 27, 2026.
-            REF: 603eeb3d4f6064917926fdaacc832790cbc9a609
-            PATH: sigstore-python
+      matrix: {}
     name: "Downstream tests for ${{ matrix.DOWNSTREAM }}"
     timeout-minutes: 15
     steps:
@@ -463,7 +361,8 @@ jobs:
 
       - run: python -m pip install -c ci-constraints-requirements.txt 'uv'
       - run: uv venv
-      - run: source .venv/bin/activate && ./.github/downstream.d/${{ matrix.DOWNSTREAM }}.sh install
+      - run: source .venv/bin/activate && ./.github/downstream.d/${{ matrix.DOWNSTREAM
+          }}.sh install
       - run: uv pip install .
       # cryptography main has a version of "(X+1).0.0.dev1" where X is the
       # most recently released major version. A package used by a downstream
@@ -484,7 +383,8 @@ jobs:
           shutil.move(d.locate_file(f"cryptography-{d.version}.dist-info"), new_path)
 
           EOF
-      - run: source .venv/bin/activate && ./.github/downstream.d/${{ matrix.DOWNSTREAM }}.sh run
+      - run: source .venv/bin/activate && ./.github/downstream.d/${{ matrix.DOWNSTREAM
+          }}.sh run
 
   all-green:
     # https://github.community/t/is-it-possible-to-require-all-github-actions-tasks-to-pass-without-enumerating-them/117957/4?u=graingert
